@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Notation Gymnastique — EPS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12161F;
+    --panel: #1B2130;
+    --panel-2: #232B3D;
+    --line: #313C52;
+    --mat: #3E86B8;
+    --mat-dim: #2A557A;
+    --gold: #E8A33D;
+    --coral: #D9584A;
+    --green: #58AE7B;
+    --text: #F1EEE7;
+    --text-dim: #9FA8BD;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh;}
+  h1,h2,h3,.num{font-family:'Oswald',sans-serif; letter-spacing:.02em; margin:0;}
+  #app{max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; padding-bottom:32px;}
+
+  /* Top bar */
+  .topbar{position:sticky; top:0; z-index:20; background:linear-gradient(180deg, var(--bg) 70%, transparent); padding:16px 16px 6px;}
+  .brand{display:flex; align-items:baseline; gap:8px; margin-bottom:2px;}
+  .brand .mark{width:10px; height:10px; border-radius:50%; background:var(--gold); flex:none;}
+  .brand h1{font-size:20px; font-weight:600; color:var(--text);}
+  .brand .ar{font-size:12px; color:var(--text-dim); margin-inline-start:auto; direction:rtl;}
+  .crumbs{font-size:12px; color:var(--text-dim); display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
+  .crumbs button{background:none; border:none; color:var(--mat); font:inherit; padding:0; cursor:pointer;}
+  .crumbs button:hover{text-decoration:underline;}
+
+  .content{padding:8px 16px 16px; flex:1;}
+
+  /* Buttons */
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; border:none; border-radius:10px; padding:13px 18px; font:600 15px/1 'Inter',sans-serif; cursor:pointer; transition:transform .1s ease, filter .15s ease;}
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--mat); color:#fff;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-gold{background:var(--gold); color:#241a06;}
+  .btn-ghost{background:var(--panel-2); color:var(--text); border:1px solid var(--line);}
+  .btn-danger{background:transparent; color:var(--coral); border:1px solid rgba(217,88,74,.4);}
+  .btn-block{width:100%;}
+  .btn-sm{padding:8px 12px; font-size:13px; border-radius:8px;}
+  .btn:disabled{opacity:.35; cursor:not-allowed;}
+
+  /* Cards */
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:12px;}
+  .card h3{font-size:15px; font-weight:500; color:var(--text-dim); text-transform:none; margin-bottom:10px;}
+
+  label.field{display:block; margin-bottom:14px;}
+  label.field span{display:block; font-size:13px; color:var(--text-dim); margin-bottom:6px;}
+  input[type=text], textarea, select{
+    width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:11px 12px; font:15px 'Inter',sans-serif;
+  }
+  textarea{min-height:96px; resize:vertical;}
+  input::placeholder{color:#6B7690;}
+
+  /* Level grid */
+  .level-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .level-card{background:var(--panel-2); border:1.5px solid var(--line); border-radius:12px; padding:14px 12px; text-align:start; cursor:pointer;}
+  .level-card:active{transform:scale(.97);}
+  .level-card.selected{border-color:var(--mat); background:linear-gradient(160deg, var(--mat-dim), var(--panel-2));}
+  .level-card .lk{font-family:'Oswald'; font-size:22px;}
+  .level-card .ln{font-size:12px; color:var(--text-dim); margin-top:2px;}
+
+  .seg{display:flex; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:3px; gap:3px;}
+  .seg button{flex:1; background:none; border:none; color:var(--text-dim); padding:9px; border-radius:8px; font:600 13px 'Inter'; cursor:pointer;}
+  .seg button.active{background:var(--mat); color:#fff;}
+
+  /* Roster list */
+  .roster-item{display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:8px;}
+  .roster-item .avatar{width:34px; height:34px; border-radius:50%; background:var(--panel-2); display:flex; align-items:center; justify-content:center; font:600 13px 'Oswald'; flex:none; color:var(--text-dim);}
+  .roster-item.done .avatar{background:var(--green); color:#0d2416;}
+  .roster-item .name{flex:1; font-weight:500; font-size:15px;}
+  .roster-item .score{font-family:'Oswald'; font-size:17px; color:var(--gold); min-width:44px; text-align:end;}
+  .roster-item .status{font-size:11px; color:var(--text-dim);}
+
+  /* Sticky score summary during evaluation */
+  .scorebar{position:sticky; top:0; z-index:15; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin:8px 0 14px; display:flex; gap:10px;}
+  .scorebar .cell{flex:1; text-align:center;}
+  .scorebar .cell .v{font-family:'Oswald'; font-size:19px;}
+  .scorebar .cell .l{font-size:10.5px; color:var(--text-dim); margin-top:1px;}
+  .scorebar .cell.total .v{color:var(--gold);}
+
+  /* Family cards */
+  .fam-card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px;}
+  .fam-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .fam-head .fname{font-weight:600; font-size:14.5px;}
+  .fam-head .ftag{font-size:11px; color:var(--text-dim);}
+  .letters{display:flex; gap:6px; flex-wrap:wrap;}
+  .letter-btn{background:var(--panel-2); border:1.5px solid var(--line); border-radius:12px; padding:14px 0; width:56px; font:700 18px 'Oswald'; color:var(--text-dim); cursor:pointer;}
+  .letter-btn:active{transform:scale(.94);}
+  .letter-btn.inrange{border-color:var(--mat); color:var(--mat);}
+  .num-btn{background:var(--panel-2); border:1.5px solid var(--line); border-radius:12px; padding:12px 0; width:52px; font:700 18px 'Oswald'; color:var(--text-dim); cursor:pointer;}
+  .num-btn.selected{border-color:var(--gold); background:linear-gradient(160deg,#3a3018,var(--panel-2)); color:var(--gold);}
+  .ench-line{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; padding:10px 12px; background:var(--panel-2); border-radius:10px;}
+  .ench-chip{font:700 14px 'Oswald'; color:var(--mat);}
+  .ench-chip.outrange{color:var(--gold);}
+  .letter-pill{background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:6px 8px; display:flex; align-items:center; gap:8px; min-width:64px; justify-content:space-between;}
+  .letter-pill.inrange{border-color:var(--mat-dim);}
+  .letter-pill .lbl{font:700 13px 'Oswald'; color:var(--text-dim);}
+  .letter-pill.inrange .lbl{color:var(--mat);}
+  .letter-pill .cnt{font:600 14px 'Inter'; min-width:14px; text-align:center;}
+  .stepbtn{background:none; border:none; color:var(--text); font-size:16px; width:20px; height:20px; line-height:1; cursor:pointer; border-radius:50%;}
+  .stepbtn:active{background:rgba(255,255,255,.1);}
+  .hint{font-size:11.5px; color:var(--text-dim); margin-top:8px; line-height:1.5;}
+
+  .quality-grid{display:flex; flex-direction:column; gap:8px;}
+  .quality-opt{display:flex; align-items:center; justify-content:space-between; background:var(--panel-2); border:1.5px solid var(--line); border-radius:10px; padding:11px 14px; cursor:pointer;}
+  .quality-opt.selected{border-color:var(--gold); background:linear-gradient(160deg,#3a3018,var(--panel-2));}
+  .quality-opt .qn{font-weight:600; font-size:14px;}
+  .quality-opt .qd{font-size:11.5px; color:var(--text-dim);}
+  .quality-opt .qv{font-family:'Oswald'; color:var(--gold);}
+
+  .fault-row{display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line);}
+  .fault-row:last-child{border-bottom:none;}
+  .fault-row .fn{font-size:14px;}
+  .fault-row .fp{font-size:11.5px; color:var(--text-dim);}
+  .stepper{display:flex; align-items:center; gap:10px;}
+  .stepper button{width:28px; height:28px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font-size:16px; cursor:pointer;}
+  .stepper .n{min-width:16px; text-align:center; font:600 14px 'Inter';}
+
+  table.results{width:100%; border-collapse:collapse; font-size:13.5px;}
+  table.results th, table.results td{padding:8px 6px; border-bottom:1px solid var(--line); text-align:start;}
+  table.results th{color:var(--text-dim); font-weight:500; font-size:11.5px;}
+  table.results td.num{font-family:'Oswald'; text-align:end;}
+
+  .empty{text-align:center; padding:40px 16px; color:var(--text-dim);}
+  .empty .mark{font-size:32px; margin-bottom:10px;}
+
+  .row{display:flex; gap:10px;}
+  .row > *{flex:1;}
+  .footer-actions{display:flex; gap:10px; margin-top:16px;}
+
+  .banner{background:var(--panel-2); border:1px dashed var(--line); border-radius:10px; padding:10px 12px; font-size:12px; color:var(--text-dim); margin-bottom:14px; line-height:1.5;}
+  .banner b{color:var(--text);}
+
+  /* Modal */
+  .modal-overlay{position:fixed; inset:0; background:rgba(8,10,15,.72); z-index:100; display:flex; align-items:flex-end; justify-content:center; backdrop-filter:blur(2px);}
+  .modal-box{background:var(--panel); border:1px solid var(--line); border-radius:16px 16px 0 0; padding:18px 16px calc(18px + env(safe-area-inset-bottom)); width:100%; max-width:520px; max-height:82vh; overflow-y:auto;}
+  @media (min-width:560px){ .modal-overlay{align-items:center;} .modal-box{border-radius:16px; max-height:80vh;} }
+  .modal-title{font-size:17px; font-weight:600; margin-bottom:14px;}
+  .modal-actions{display:flex; gap:10px; margin-top:16px;}
+  .modal-actions .btn{flex:1;}
+  .import-count{font-size:12px; color:var(--mat); margin-top:6px;}
+  .student-row{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line);}
+  .student-row:last-child{border-bottom:none;}
+  .student-row .sn{flex:1; font-size:14.5px;}
+  .student-remove{background:none; border:1px solid var(--line); color:var(--coral); width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:13px; line-height:1;}
+  .roster-empty{text-align:center; color:var(--text-dim); font-size:13px; padding:14px 0;}
+
+  @media print{
+    body{background:#fff; color:#000;}
+    .topbar, .footer-actions, .no-print{display:none !important;}
+    .card, table.results th, table.results td{border-color:#ccc;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ============================= DATA ============================= */
+
+const FAMILIES = [
+  {id:'rav', name:'Roulades avant', el:{A:'Roulade avant groupée, arrivée accroupie', B:'Roulade avant écart / élevée', C:'Roulade avant arrivée 1 pied ou sautée', D:'Roulade avant costale (départ élevé)', E:'Roulade avant liée à une sortie acrobatique'}},
+  {id:'rar', name:'Roulades arrière', el:{A:'Roulade arrière simple, arrivée accroupie', B:'Roulade arrière jambes écartées', C:'Roulade arrière jambes tendues et serrées', D:'Roulade arrière piquée (passage à l\u2019ATR)', E:'Roulade arrière enchaînée à un salto'}},
+  {id:'atr', name:'Équilibres (ATR)', el:{A:'Montée à l\u2019ATR (ATR passager)', B:'ATR tenu 1\u2019\u2019 / placement dos accroupi', C:'ATR tenu 2\u2019\u2019 / ATR ¼ tour', D:'ATR ½ valse / ATR en force', E:'ATR 1 tour en valse'}},
+  {id:'rou', name:'Roue et Rondade', el:{A:'Roue pied-pied', B:'Roue classique, jambes écartées', C:'Rondade', D:'Rondade enchaînée / roue à une main', E:'Flic-flac'}},
+  {id:'sou', name:'Attitudes et souplesses', el:{A:'Planche écrasée / chandelle', B:'Planche sur un pied, tenue 2\u2019\u2019', C:'Planche faciale ou costale, tenue 2\u2019\u2019', D:'Grand écart / pont-souplesse', E:'Souplesse arrière complète'}},
+  {id:'sau', name:'Sauts', el:{A:'Saut vertical simple', B:'Saut ½ tour ou saut groupé', C:'Saut de chat / saut tour complet', D:'Saut de mains', E:'Saut de tête / salto avant groupé'}},
+  {id:'tou', name:'Tours et pivots', el:{A:'½ tour sur 2 pieds', B:'Tour sur 1 pied, sur pointe', C:'Tour et ½ sur 1 pied', D:'Pirouette 1 tour', E:'Pirouette 1 tour ½'}},
+  {id:'lia', name:'Éléments de liaison', el:{A:'2 pas de liaison simples', B:'Enchaînement de 2 pas gymniques', C:'Pas chassé + tour', D:'Combinaison de 3 pas liés', E:'Combinaison acrobatique liée avancée'}},
+];
+const LETTERS = ['A','B','C','D','E'];
+
+const LEVELS = {
+  TC:   {label:'Tronc Commun',      group:'Lycée',  letters:{A:0.5,B:1,C:1.5},        required:{A:2,B:3,C:2}, diffMax:7, compFamilies:4, familyValue:0.4, series:0.4, compMax:2, execMax:3, finalMax:12},
+  '1BAC':{label:'1ère Bac',          group:'Lycée',  letters:{B:0.5,C:1,D:1.5},        required:{B:2,C:3,D:2}, diffMax:7, compFamilies:4, familyValue:0.4, series:0.4, compMax:2, execMax:4, finalMax:13},
+  '2BAC':{label:'2ème Bac',          group:'Lycée',  letters:{C:0.5,D:1,E:1.5},        required:{C:2,D:3,E:2}, diffMax:7, compFamilies:4, familyValue:0.4, series:0.4, compMax:2, execMax:5, finalMax:14},
+  '1AC': {label:'1ère Année Collège',group:'Collège',letters:{A:1,B:1.5},              required:{A:3,B:2},     diffMax:6, ac:true, compFamilies:3, familyValue:0.5, compSpecMax:1.5, enchMax:4.5, execMax:2, finalMax:14},
+  '2AC': {label:'2ème Année Collège',group:'Collège',letters:{A:0.75,B:1,C:1.75},      required:{A:3,B:2,C:1}, diffMax:6, ac:true, compFamilies:3, familyValue:0.5, compSpecMax:1.5, enchMax:3.5, execMax:2, finalMax:13},
+  '3AC': {label:'3ème Année Collège',group:'Collège',letters:{A:0.5,B:0.75,C:2},       required:{A:2,B:4,C:1}, diffMax:6, ac:true, compFamilies:3, familyValue:0.5, compSpecMax:1.5, enchMax:2.5, execMax:2, finalMax:12},
+};
+const LEVEL_ORDER = ['TC','1BAC','2BAC','1AC','2AC','3AC'];
+
+const QUALITY = [
+  {key:'parfaite', label:'Parfaite exécution', desc:'Pas de fautes', frac:1},
+  {key:'bonne',    label:'Bonne exécution',    desc:'Très peu de fautes', frac:0.75},
+  {key:'moyenne',  label:'Exécution moyenne',  desc:'Quelques fautes', frac:0.5},
+  {key:'faible',   label:'Exécution faible',   desc:'Beaucoup de fautes', frac:0.25},
+  {key:'tresfaible',label:'Très faible exécution', desc:'Beaucoup de fautes et de chutes', frac:0},
+];
+const ENCH_QUALITY = [
+  {key:'excellente', label:'Excellent enchaînement', desc:'Agencement, rythme, amplitude et aisance réunis', frac:1},
+  {key:'bonne',       label:'Bon enchaînement',       desc:'Très peu de rupture', frac:0.75},
+  {key:'moyenne',     label:'Enchaînement moyen',     desc:'Quelques ruptures de rythme', frac:0.5},
+  {key:'faible',      label:'Enchaînement faible',    desc:'Peu de liaison entre éléments', frac:0.25},
+  {key:'tresfaible',  label:'Très faible',            desc:'Pas d\u2019enchaînement réel', frac:0},
+];
+
+/* ============================= STATE ============================= */
+
+let state = {
+  screen: 'home',           // home | setup | roster | evaluate | results
+  classes: [],              // index: {id, level, gender, className, date, studentCount, avg}
+  current: null,            // full class object currently open
+  evalId: null,             // student id being evaluated
+  execMode: 'global',       // global | analytic
+};
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+/* Empêche les doublons : compare les noms sans tenir compte des espaces/majuscules. */
+function dedupeNames(existingNames, rawNames){
+  const seen = new Set(existingNames.map(n=>n.trim().toLowerCase()));
+  const unique = [];
+  let skipped = 0;
+  rawNames.forEach(n=>{
+    const key = n.trim().toLowerCase();
+    if(!key) return;
+    if(seen.has(key)){ skipped++; return; }
+    seen.add(key);
+    unique.push(n.trim());
+  });
+  return {unique, skipped};
+}
+
+/* ============================= STORAGE (localStorage — vraie mémoire du navigateur) ============================= */
+const LS_INDEX_KEY = 'gym-classes-index';
+const LS_CLASS_PREFIX = 'gym-class:';
+
+function loadIndex(){
+  try{
+    const raw = localStorage.getItem(LS_INDEX_KEY);
+    state.classes = raw ? JSON.parse(raw) : [];
+  }catch(e){ state.classes = []; }
+}
+function saveIndex(){
+  try{ localStorage.setItem(LS_INDEX_KEY, JSON.stringify(state.classes)); }catch(e){}
+}
+function countsFromSequence(seq){
+  const c = {A:0,B:0,C:0,D:0,E:0};
+  (seq||[]).forEach(L=>{ if(c[L]!==undefined) c[L]++; });
+  return c;
+}
+function normalizeStudent(s){
+  if(!Array.isArray(s.diffSequence)){
+    // migration depuis l'ancien format (counts par lettre ou par famille)
+    const seq = [];
+    const oldCounts = s.counts;
+    if(oldCounts && typeof oldCounts==='object'){
+      const isFlat = LETTERS.some(L=>typeof oldCounts[L]==='number');
+      if(isFlat){
+        LETTERS.forEach(L=>{ const n=oldCounts[L]||0; for(let i=0;i<n;i++) seq.push(L); });
+      } else {
+        Object.values(oldCounts).forEach(famCounts=>{
+          if(famCounts && typeof famCounts==='object'){
+            LETTERS.forEach(L=>{ const n=famCounts[L]||0; for(let i=0;i<n;i++) seq.push(L); });
+          }
+        });
+      }
+    }
+    s.diffSequence = seq;
+  }
+  delete s.counts;
+  s.extras = s.extras && typeof s.extras==='object' ? s.extras : {};
+  if(typeof s.extras.famCount!=='number' || isNaN(s.extras.famCount)) s.extras.famCount = 0;
+  if(typeof s.extras.seriesDone!=='boolean') s.extras.seriesDone = false;
+  if(s.extras.enchQuality===undefined) s.extras.enchQuality = null;
+  s.execData = s.execData && typeof s.execData==='object' ? s.execData : {};
+  s.execMode = s.execMode==='analytic' ? 'analytic' : 'global';
+  s.gender = s.gender==='F' ? 'F' : 'G';
+  return s;
+}
+function normalizeClass(cls){
+  if(cls && Array.isArray(cls.students)) cls.students.forEach(normalizeStudent);
+  return cls;
+}
+
+function loadClass(id){
+  try{
+    const raw = localStorage.getItem(LS_CLASS_PREFIX+id);
+    return raw ? normalizeClass(JSON.parse(raw)) : null;
+  }catch(e){ return null; }
+}
+function saveClass(cls){
+  try{ localStorage.setItem(LS_CLASS_PREFIX+cls.id, JSON.stringify(cls)); }catch(e){}
+  const idx = state.classes.findIndex(c=>c.id===cls.id);
+  const summary = classSummary(cls);
+  if(idx>=0) state.classes[idx] = summary; else state.classes.unshift(summary);
+  saveIndex();
+}
+function deleteClass(id){
+  try{ localStorage.removeItem(LS_CLASS_PREFIX+id); }catch(e){}
+  state.classes = state.classes.filter(c=>c.id!==id);
+  saveIndex();
+}
+function classSummary(cls){
+  const done = cls.students.filter(s=>s.done);
+  const avg = done.length ? (done.reduce((a,s)=>a+s.score.total,0)/done.length) : null;
+  const boys = cls.students.filter(s=>s.gender!=='F').length;
+  const girls = cls.students.filter(s=>s.gender==='F').length;
+  return {id:cls.id, level:cls.level, className:cls.className, date:cls.date, studentCount:cls.students.length, boys, girls, doneCount:done.length, avg};
+}
+
+/* ============================= SCORING ============================= */
+
+function emptyCounts(){ return {A:0,B:0,C:0,D:0,E:0}; }
+
+function computeDifficulty(level, counts){
+  const pool = {...counts};
+  const reqLetters = Object.keys(level.required);
+  const remaining = {}; reqLetters.forEach(L=>remaining[L]=level.required[L]);
+  let achieved = 0;
+  const detail = [];
+  // exact
+  reqLetters.forEach(L=>{
+    while(remaining[L]>0 && pool[L]>0){ pool[L]--; remaining[L]--; achieved+=level.letters[L]; detail.push({slot:L, by:L, pts:level.letters[L], type:'exact'}); }
+  });
+  // superior substitution — full slot value
+  reqLetters.forEach(L=>{
+    const idx = LETTERS.indexOf(L);
+    while(remaining[L]>0){
+      let found=null;
+      for(let i=idx+1;i<LETTERS.length;i++){ if(pool[LETTERS[i]]>0){found=LETTERS[i]; break;} }
+      if(!found) break;
+      pool[found]--; remaining[L]--; achieved+=level.letters[L]; detail.push({slot:L, by:found, pts:level.letters[L], type:'sup'});
+    }
+  });
+  // inferior partial — 0.25 each
+  reqLetters.forEach(L=>{
+    const idx = LETTERS.indexOf(L);
+    while(remaining[L]>0){
+      let found=null;
+      for(let i=idx-1;i>=0;i--){ if(pool[LETTERS[i]]>0){found=LETTERS[i]; break;} }
+      if(!found) break;
+      pool[found]--; remaining[L]--; achieved+=0.25; detail.push({slot:L, by:found, pts:0.25, type:'inf'});
+    }
+  });
+  const missing = Object.values(remaining).reduce((a,b)=>a+b,0);
+  return {achieved: Math.min(achieved, level.diffMax), max: level.diffMax, missing, detail};
+}
+
+function computeComposition(level, extras){
+  const famCount = Math.max(0, Math.min(extras.famCount||0, level.compFamilies));
+  const famPts = famCount * level.familyValue;
+  if(level.ac){
+    const q = ENCH_QUALITY.find(q=>q.key===extras.enchQuality);
+    const enchPts = q ? q.frac*level.enchMax : 0;
+    return {achieved: famPts+enchPts, max: level.compFamilies*level.familyValue + level.enchMax, famCount, famPts, enchPts};
+  } else {
+    const seriesPts = extras.seriesDone ? level.series : 0;
+    return {achieved: famPts+seriesPts, max: level.compFamilies*level.familyValue + level.series, famCount, famPts, seriesPts};
+  }
+}
+
+function computeExecution(level, mode, data){
+  if(mode==='global'){
+    const q = QUALITY.find(q=>q.key===data.quality);
+    return q ? q.frac*level.execMax : 0;
+  } else {
+    const ded = (data.petite||0)*0.1 + (data.moyenne||0)*0.2 + (data.grossiere||0)*0.3 + (data.chute||0)*0.5;
+    return Math.max(0, level.execMax - ded);
+  }
+}
+
+function computeScore(cls, student){
+  const level = LEVELS[cls.level];
+  const diff = computeDifficulty(level, countsFromSequence(student.diffSequence));
+  const comp = computeComposition(level, student.extras);
+  const exec = computeExecution(level, student.execMode, student.execData);
+  const total = diff.achieved + comp.achieved + exec;
+  return {diff, comp, exec, total: Math.round(total*100)/100, max: level.finalMax};
+}
+
+/* ============================= RENDER HELPERS ============================= */
+const $ = sel => document.querySelector(sel);
+function el(tag, attrs={}, children=[]){
+  const e = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    if(v===null || v===undefined) return;
+    if(k==='class') e.className=v;
+    else if(k==='html') e.innerHTML=v;
+    else if(k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k,v);
+  });
+  (Array.isArray(children)?children:[children]).forEach(c=>{
+    if(c==null) return;
+    if(typeof c==='string' || typeof c==='number') e.appendChild(document.createTextNode(String(c)));
+    else e.appendChild(c);
+  });
+  return e;
+}
+function fmt(n){ return (Math.round(n*100)/100).toString().replace('.', ','); }
+
+/* ── Modal générique (overlay + carte), même logique que "Ajouter une classe" / "Modifier les élèves" ── */
+function closeModal(){
+  const ov = document.getElementById('modalOverlay');
+  if(ov) ov.remove();
+}
+function openModal({title, body, actions}){
+  closeModal();
+  const overlay = el('div',{id:'modalOverlay', class:'modal-overlay', onclick:(e)=>{ if(e.target.id==='modalOverlay') closeModal(); }});
+  const box = el('div',{class:'modal-box'},[
+    el('h3',{class:'modal-title'}, title),
+  ]);
+  (Array.isArray(body)?body:[body]).forEach(b=>box.appendChild(b));
+  const actionsRow = el('div',{class:'modal-actions'});
+  actions.forEach(a=>actionsRow.appendChild(el('button',{class:'btn '+(a.cls||'btn-ghost')+' btn-sm', onclick:a.onClick}, a.label)));
+  box.appendChild(actionsRow);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function topbar(crumbs){
+  const bar = el('div',{class:'topbar'});
+  bar.appendChild(el('div',{class:'brand'},[
+    el('span',{class:'mark'}),
+    el('h1',{},'Notation Gymnastique'),
+    el('span',{class:'ar'},'تنقيط الجمباز'),
+  ]));
+  const cr = el('div',{class:'crumbs'});
+  crumbs.forEach((c,i)=>{
+    if(i>0) cr.appendChild(el('span',{},'›'));
+    if(c.onClick) cr.appendChild(el('button',{onclick:c.onClick},c.label));
+    else cr.appendChild(el('span',{},c.label));
+  });
+  bar.appendChild(cr);
+  return bar;
+}
+
+/* ============================= SCREENS ============================= */
+
+async function render(){
+  const app = $('#app');
+  if(!app) return;
+  app.innerHTML = '';
+  try{
+    if(state.screen==='home') return renderHome(app);
+    if(state.screen==='levelClasses') return renderLevelClasses(app);
+    if(state.screen==='setup') return renderSetup(app);
+    if(state.screen==='roster') return renderRoster(app);
+    if(state.screen==='evaluate') return renderEvaluate(app);
+    if(state.screen==='results') return renderResults(app);
+  }catch(err){
+    app.innerHTML = '';
+    app.appendChild(topbar([{label:'Accueil', onClick:()=>{state.screen='home'; render();}}]));
+    const box = el('div',{class:'content'},[
+      el('div',{class:'card', style:'border-color:var(--coral);'},[
+        el('h3',{style:'color:var(--coral);'}, '⚠️ Une erreur est survenue'),
+        el('div',{style:'font-size:13px; color:var(--text-dim); margin-bottom:10px;'}, 'Envoyez une capture de ce message pour que ça soit corrigé.'),
+        el('div',{style:'font:12px monospace; color:var(--text-dim); white-space:pre-wrap; word-break:break-word; background:var(--panel-2); padding:10px; border-radius:8px;'}, (err && err.message ? err.message : String(err))),
+      ]),
+      el('button',{class:'btn btn-primary btn-block', style:'margin-top:14px;', onclick:()=>{state.screen='home'; render();}}, 'Retour à l\u2019accueil'),
+    ]);
+    app.appendChild(box);
+  }
+}
+
+function renderHome(app){
+  app.appendChild(topbar([{label:'Accueil'}]));
+  const content = el('div',{class:'content'});
+  content.appendChild(el('div',{class:'banner'}, 'Choisissez le niveau scolaire pour gérer ses classes.'));
+
+  const grid = el('div',{class:'level-grid'});
+  LEVEL_ORDER.forEach(k=>{
+    const lv = LEVELS[k];
+    const count = state.classes.filter(c=>c.level===k).length;
+    grid.appendChild(el('div',{class:'level-card', onclick:()=>{ state.currentLevel = k; state.screen='levelClasses'; render(); }},[
+      el('div',{class:'lk'}, k),
+      el('div',{class:'ln'}, lv.label),
+      el('div',{class:'ln', style:'margin-top:6px; color:var(--mat);'}, count + ' classe(s)'),
+    ]));
+  });
+  content.appendChild(grid);
+  app.appendChild(content);
+}
+
+function renderLevelClasses(app){
+  const level = LEVELS[state.currentLevel];
+  app.appendChild(topbar([{label:'Accueil', onClick:()=>{state.screen='home'; render();}}, {label:level.label}]));
+  const content = el('div',{class:'content'});
+
+  content.appendChild(el('button',{class:'btn btn-primary btn-block', onclick:()=>{
+    state._setupClassName = nextClassName(state.currentLevel);
+    state._setupStudentsG = '';
+    state._setupStudentsF = '';
+    state.screen='setup';
+    render();
+  }}, '✚ Ajouter une classe'));
+
+  const classes = state.classes.filter(c=>c.level===state.currentLevel).sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+
+  content.appendChild(el('h3',{style:'margin:22px 0 10px; font-size:13px; color:var(--text-dim); font-weight:500;'}, classes.length? 'Classes de ce niveau' : ''));
+
+  if(!classes.length){
+    content.appendChild(el('div',{class:'empty'},[
+      el('div',{class:'mark'},'🤸'),
+      el('div',{},'Aucune classe pour ce niveau pour l\u2019instant.'),
+      el('div',{style:'font-size:12.5px; margin-top:4px;'},'Ajoutez-en une pour commencer la notation.'),
+    ]));
+  } else {
+    classes.forEach(c=>{
+      const card = el('div',{class:'card', style:'cursor:pointer;', onclick: ()=>{
+        const cls = loadClass(c.id);
+        if(cls){ state.current = cls; state.screen='roster'; render(); }
+      }});
+      card.appendChild(el('div',{style:'display:flex; justify-content:space-between; align-items:center;'},[
+        el('div',{},[
+          el('div',{style:'font-weight:600; font-size:15px;'}, c.className || '(sans nom)'),
+          el('div',{style:'font-size:12px; color:var(--text-dim); margin-top:2px;'}, c.boys+' garçons · '+c.girls+' filles · '+c.doneCount + '/' + c.studentCount + ' notés'),
+        ]),
+        el('div',{style:'text-align:end;'},[
+          el('div',{class:'num', style:'font-size:20px; color:var(--gold);'}, c.avg!=null? fmt(c.avg)+'/'+level.finalMax : '—'),
+          el('div',{style:'font-size:10.5px; color:var(--text-dim);'}, 'moyenne'),
+        ]),
+      ]));
+      content.appendChild(card);
+    });
+  }
+  app.appendChild(content);
+}
+
+function nextClassName(level){
+  const n = state.classes.filter(c=>c.level===level).length + 1;
+  return level + n;
+}
+
+function countStudents(text){ return (text||'').split('\n').map(s=>s.trim()).filter(Boolean).length; }
+function updateImportCount(boxId, stateKey){
+  const box = document.getElementById(boxId);
+  if(!box) return;
+  const n = countStudents(state[stateKey]);
+  box.textContent = n + ' élève(s) détecté(s)';
+  box.style.display = n ? '' : 'none';
+}
+
+function makeStudent(name, gender){
+  return {id:uid(), name, gender, done:false, diffSequence: [], extras:{seriesDone:false, enchQuality:null, famCount:0}, execMode:'global', execData:{}, score:null};
+}
+
+function renderSetup(app){
+  const level = LEVELS[state.currentLevel];
+  app.appendChild(topbar([{label:'Accueil', onClick:()=>{state.screen='home'; render();}}, {label:level.label, onClick:()=>{state.screen='levelClasses'; render();}}, {label:'Nouvelle classe'}]));
+  const content = el('div',{class:'content'});
+
+  content.appendChild(el('div',{class:'card'},[
+    el('label',{class:'field'},[
+      el('span',{}, 'Nom de la classe'),
+      el('input',{type:'text', id:'className', autocomplete:'off', placeholder:'ex. 2BAC-SVT 2', value: state._setupClassName||'', oninput:(e)=>{ state._setupClassName = e.target.value; }}),
+    ]),
+  ]));
+
+  content.appendChild(el('div',{class:'card'},[
+    el('h3',{},'♂ Élèves garçons'),
+    el('label',{class:'field'},[
+      el('span',{}, 'Un nom par ligne'),
+      el('textarea',{id:'studentListG', autocomplete:'off', spellcheck:'false', placeholder:'Ayoub El Amrani\nKarim Idrissi\n…', oninput:(e)=>{ state._setupStudentsG = e.target.value; updateImportCount('importCountG','_setupStudentsG'); }}, state._setupStudentsG||''),
+    ]),
+    el('div',{id:'importCountG', class:'import-count', style: countStudents(state._setupStudentsG)?'':'display:none;'}, countStudents(state._setupStudentsG)+' élève(s) détecté(s)'),
+  ]));
+
+  content.appendChild(el('div',{class:'card'},[
+    el('h3',{},'♀ Élèves filles'),
+    el('label',{class:'field'},[
+      el('span',{}, 'Un nom par ligne'),
+      el('textarea',{id:'studentListF', autocomplete:'off', spellcheck:'false', placeholder:'Salma Benjelloun\nHouda Amrani\n…', oninput:(e)=>{ state._setupStudentsF = e.target.value; updateImportCount('importCountF','_setupStudentsF'); }}, state._setupStudentsF||''),
+    ]),
+    el('div',{id:'importCountF', class:'import-count', style: countStudents(state._setupStudentsF)?'':'display:none;'}, countStudents(state._setupStudentsF)+' élève(s) détecté(s)'),
+  ]));
+
+  content.appendChild(el('button',{class:'btn btn-primary btn-block', onclick: ()=>{
+    const className = ($('#className').value||'').trim();
+    const rawG = ($('#studentListG').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+    const rawF = ($('#studentListF').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+    const dedG = dedupeNames([], rawG);
+    const dedF = dedupeNames(dedG.unique, rawF);
+    const cls = {
+      id: uid(), level: state.currentLevel,
+      className: className || nextClassName(state.currentLevel),
+      date: new Date().toISOString().slice(0,10),
+      students: [...dedG.unique.map(n=>makeStudent(n,'G')), ...dedF.unique.map(n=>makeStudent(n,'F'))],
+    };
+    state.current = cls;
+    saveClass(cls);
+    state._setupClassName=''; state._setupStudentsG=''; state._setupStudentsF='';
+    state.screen='roster';
+    render();
+  }}, 'Créer la classe'));
+
+  app.appendChild(content);
+}
+
+function renderRoster(app){
+  const cls = state.current;
+  const level = LEVELS[cls.level];
+  app.appendChild(topbar([{label:'Accueil', onClick:()=>{state.screen='home'; render();}}, {label:level.label, onClick:()=>{state.currentLevel=cls.level; state.screen='levelClasses'; render();}}, {label: cls.className}]));
+  const content = el('div',{class:'content'});
+
+  content.appendChild(el('div',{class:'banner'},[
+    el('b',{}, level.label), ' — barème officiel : Difficulté /' + level.diffMax + ', Composition /' + (level.ac? (level.compSpecMax+level.enchMax) : level.compMax) + ', Exécution /' + level.execMax + ' → note sur ' + level.finalMax + '.'
+  ]));
+
+  content.appendChild(el('div',{class:'row', style:'margin-bottom:14px;'},[
+    el('button',{class:'btn btn-ghost btn-sm', onclick:()=>openEditStudentsModal(cls)}, '✏️ Modifier les élèves'),
+    el('button',{class:'btn btn-ghost btn-sm', onclick:()=>{state.screen='results'; render();}}, 'Résultats'),
+  ]));
+
+  if(!cls.students.length){
+    content.appendChild(el('div',{class:'empty'},[
+      el('div',{class:'mark'},'📋'),
+      el('div',{},'Aucun élève dans cette classe.'),
+    ]));
+  }
+
+  cls.students.forEach((s,i)=>{
+    const item = el('div',{class:'roster-item'+(s.done?' done':''), onclick:()=>{state.evalId=s.id; state.screen='evaluate'; state.execMode = s.execMode||'global'; render();}},[
+      el('div',{class:'avatar'}, s.done?'✓':(i+1)),
+      el('div',{class:'name'},[
+        (s.gender==='F'?'♀ ':'♂ ') + s.name,
+        el('div',{class:'status'}, s.done? 'Noté' : 'En attente'),
+      ]),
+      el('div',{class:'score'}, s.done? fmt(s.score.total) : '—'),
+    ]);
+    content.appendChild(item);
+  });
+
+  content.appendChild(el('button',{class:'btn btn-danger btn-block', style:'margin-top:18px;', onclick:()=>{
+    if(confirm('Supprimer définitivement la classe "'+cls.className+'" et toutes ses notes enregistrées ? Cette action est irréversible.')){
+      deleteClass(cls.id);
+      state.current = null;
+      state.currentLevel = cls.level;
+      state.screen = 'levelClasses';
+      render();
+    }
+  }}, '🗑️ Supprimer la classe'));
+
+  app.appendChild(content);
+}
+
+function openEditStudentsModal(cls){
+  const list = el('div',{id:'rosterEditList'});
+  function renderList(){
+    list.innerHTML = '';
+    if(!cls.students.length){ list.appendChild(el('div',{class:'roster-empty'},'Aucun élève dans cette classe pour le moment.')); return; }
+    cls.students.forEach(s=>{
+      list.appendChild(el('div',{class:'student-row'},[
+        el('div',{class:'sn'}, (s.gender==='F'?'♀ ':'♂ ') + s.name),
+        el('button',{class:'student-remove', title:'Retirer cet élève', onclick:()=>{
+          if(confirm('Retirer "'+s.name+'" de la classe "'+cls.className+'" ?')){
+            cls.students = cls.students.filter(x=>x.id!==s.id);
+            saveClass(cls);
+            renderList();
+            render();
+          }
+        }}, '✕'),
+      ]));
+    });
+  }
+  renderList();
+
+  function makeAddSection(label, gender, placeholder){
+    const textarea = el('textarea',{autocomplete:'off', spellcheck:'false', placeholder});
+    const countBox = el('div',{class:'import-count', style:'display:none;'});
+    textarea.addEventListener('input', ()=>{
+      const n = countStudents(textarea.value);
+      countBox.textContent = n + ' élève(s) détecté(s)';
+      countBox.style.display = n ? '' : 'none';
+    });
+    const addBtn = el('button',{class:'btn btn-ghost btn-sm', style:'margin-top:8px;', onclick:()=>{
+      const raw = textarea.value.split('\n').map(s=>s.trim()).filter(Boolean);
+      const {unique, skipped} = dedupeNames(cls.students.map(s=>s.name), raw);
+      unique.forEach(n=>{ cls.students.push(makeStudent(n, gender)); });
+      if(unique.length){ saveClass(cls); render(); }
+      textarea.value=''; countBox.style.display='none';
+      renderList();
+      if(skipped>0){
+        const note = el('div',{style:'font-size:12px; color:var(--coral); margin-top:6px;'}, skipped + ' nom(s) ignoré(s) car déjà présent(s) dans la classe.');
+        addBtn.parentNode.insertBefore(note, addBtn.nextSibling);
+        setTimeout(()=>note.remove(), 4000);
+      }
+    }}, '✚ Ajouter');
+    return el('div',{style:'margin-top:14px;'},[
+      el('div',{style:'font-size:12.5px; color:var(--text-dim); margin-bottom:6px;'}, label),
+      textarea, countBox, addBtn,
+    ]);
+  }
+
+  openModal({
+    title: 'Modifier les élèves',
+    body: [
+      el('div',{style:'font-size:12.5px; color:var(--text-dim); margin-bottom:12px;'}, 'Ajoutez un nouvel élève ou retirez un élève qui a quitté la classe.'),
+      list,
+      el('div',{style:'font-size:12px; color:var(--text-dim); margin:14px 0 0; border-top:1px solid var(--line); padding-top:12px;'}, 'Ajouter des élèves'),
+      makeAddSection('♂ Garçons', 'G', 'Karim Idrissi\n…'),
+      makeAddSection('♀ Filles', 'F', 'Salma Benjelloun\n…'),
+    ],
+    actions: [ {label:'Fermer', cls:'btn-primary', onClick: closeModal} ],
+  });
+}
+
+function renderEvaluate(app){
+  const cls = state.current;
+  const level = LEVELS[cls.level];
+  const student = cls.students.find(s=>s.id===state.evalId);
+  app.appendChild(topbar([{label:'Accueil', onClick:()=>{state.screen='home'; render();}}, {label:cls.className, onClick:()=>{state.screen='roster'; render();}}, {label:student.name}]));
+
+  const content = el('div',{class:'content'});
+
+  const diff = computeDifficulty(level, countsFromSequence(student.diffSequence));
+  const comp = computeComposition(level, student.extras);
+
+  const scorebar = el('div',{class:'scorebar'},[
+    el('div',{class:'cell'},[el('div',{class:'v'}, fmt(diff.achieved)+'/'+diff.max), el('div',{class:'l'},'Difficulté')]),
+    el('div',{class:'cell'},[el('div',{class:'v'}, fmt(comp.achieved)+'/'+fmt(comp.max)), el('div',{class:'l'},'Composition')]),
+    el('div',{class:'cell total'},[el('div',{class:'v'}, fmt(diff.achieved+comp.achieved)), el('div',{class:'l'},'Sous-total')]),
+  ]);
+  content.appendChild(scorebar);
+
+  const reqStr = Object.entries(level.required).map(([L,n])=>n+L).join(' + ');
+  const letterValuesStr = Object.entries(level.letters).map(([L,v])=>L+'='+fmt(v)).join(' · ');
+  content.appendChild(el('div',{class:'banner'},[
+    'Difficulté requise : ', el('b',{},reqStr), ' (' + level.diffMax + ' pts) — ', letterValuesStr, '. Composition : ', el('b',{}, level.compFamilies + ' familles différentes'), level.ac? '' : (' + une série (' + (student.gender==='F'?'3 mouvements chorégraphiques liés':'2 acrobaties enchaînées') + ')'), '.'
+  ]));
+
+  // Difficulté — boutons à touche simple A→E + ligne d'enchaînement + annuler
+  const counts = countsFromSequence(student.diffSequence);
+  const diffCard = el('div',{class:'fam-card'});
+  diffCard.appendChild(el('div',{class:'fam-head'},[el('div',{class:'fname'},'Difficulté'), el('div',{class:'ftag'}, fmt(diff.achieved)+' / '+diff.max)]));
+  const row = el('div',{class:'letters'});
+  LETTERS.forEach(L=>{
+    const inRange = !!level.letters[L];
+    row.appendChild(el('button',{class:'letter-btn'+(inRange?' inrange':''), onclick:()=>{ student.diffSequence.push(L); saveClass(cls); render(); }}, L));
+  });
+  diffCard.appendChild(row);
+
+  // Ligne d'enchaînement en direct : lettres du niveau toujours affichées, lettres hors-niveau ajoutées si utilisées
+  const baseLetters = LETTERS.filter(L=>!!level.letters[L]);
+  const extraLetters = LETTERS.filter(L=>!level.letters[L] && counts[L]>0);
+  const seqLine = el('div',{class:'ench-line'});
+  baseLetters.concat(extraLetters).forEach(L=>{
+    const inRange = !!level.letters[L];
+    seqLine.appendChild(el('span',{class:'ench-chip'+(inRange?'':' outrange')}, counts[L]+L));
+  });
+  diffCard.appendChild(seqLine);
+
+  diffCard.appendChild(el('button',{class:'btn btn-ghost btn-sm btn-block', style:'margin-top:12px;', disabled: student.diffSequence.length? null:'disabled', onclick:()=>{
+    student.diffSequence.pop(); saveClass(cls); render();
+  }}, '↩ Annuler la dernière touche' + (student.diffSequence.length? ' (' + student.diffSequence[student.diffSequence.length-1] + ')' : '')));
+
+  diffCard.appendChild(el('div',{class:'hint'}, 'Chaque tape sur une lettre = un élément de cette difficulté réalisé par l\u2019élève. Les lettres en bleu comptent à plein tarif pour ce niveau ; les lettres en orange (hors-niveau) servent aux règles de repêchage.'));
+  content.appendChild(diffCard);
+
+  // Composition — nombre de familles choisi directement par le professeur
+  const famCard = el('div',{class:'fam-card'});
+  famCard.appendChild(el('div',{class:'fam-head'},[el('div',{class:'fname'},'Familles différentes présentées'), el('div',{class:'ftag'}, comp.famCount+' / '+level.compFamilies)]));
+  const famRow = el('div',{class:'letters', style:'justify-content:center;'});
+  for(let n=1;n<=level.compFamilies;n++){
+    const selected = student.extras.famCount===n;
+    famRow.appendChild(el('button',{class:'num-btn'+(selected?' selected':''), onclick:()=>{
+      student.extras.famCount = selected ? 0 : n;
+      saveClass(cls); render();
+    }}, n));
+  }
+  famCard.appendChild(famRow);
+  famCard.appendChild(el('div',{class:'hint'}, 'Nombre de familles gymniques différentes (parmi les 8) vues dans l\u2019enchaînement de l\u2019élève — à votre appréciation, ' + fmt(level.familyValue) + ' pt chacune.'));
+  content.appendChild(famCard);
+
+  if(!level.ac){
+    const seriesLabel = student.gender==='F' ? 'Série de 3 mouvements chorégraphiques enchaînés réalisée' : 'Série de 2 acrobaties enchaînées réalisée';
+    content.appendChild(el('div',{class:'fam-card'},[
+      el('div',{class:'quality-opt'+(student.extras.seriesDone?' selected':''), onclick:()=>{student.extras.seriesDone=!student.extras.seriesDone; saveClass(cls); render();}},[
+        el('div',{},[el('div',{class:'qn'}, seriesLabel), el('div',{class:'qd'},'Bonus de composition')]),
+        el('div',{class:'qv'}, '+'+fmt(level.series)),
+      ]),
+    ]));
+  } else {
+    const card = el('div',{class:'fam-card'});
+    card.appendChild(el('div',{class:'fam-head'},[el('div',{class:'fname'},'Qualité de l\u2019enchaînement'), el('div',{class:'ftag'}, '/ '+fmt(level.enchMax))]));
+    const qg = el('div',{class:'quality-grid'});
+    ENCH_QUALITY.forEach(q=>{
+      qg.appendChild(el('div',{class:'quality-opt'+(student.extras.enchQuality===q.key?' selected':''), onclick:()=>{student.extras.enchQuality=q.key; saveClass(cls); render();}},[
+        el('div',{},[el('div',{class:'qn'},q.label), el('div',{class:'qd'},q.desc)]),
+        el('div',{class:'qv'}, fmt(q.frac*level.enchMax)),
+      ]));
+    });
+    card.appendChild(qg);
+    content.appendChild(card);
+  }
+
+  // Execution
+  const execCard = el('div',{class:'fam-card'});
+  execCard.appendChild(el('div',{class:'fam-head'},[el('div',{class:'fname'},'Exécution'), el('div',{class:'ftag'}, '/ '+level.execMax)]));
+  const seg = el('div',{class:'seg', style:'margin-bottom:12px;'});
+  ['global','analytic'].forEach(m=>{
+    seg.appendChild(el('button',{class: student.execMode===m?'active':'', onclick:()=>{student.execMode=m; saveClass(cls); render();}}, m==='global'?'Appréciation globale':'Appréciation analytique'));
+  });
+  execCard.appendChild(seg);
+
+  if(student.execMode==='global'){
+    const qg = el('div',{class:'quality-grid'});
+    QUALITY.forEach(q=>{
+      qg.appendChild(el('div',{class:'quality-opt'+(student.execData.quality===q.key?' selected':''), onclick:()=>{student.execData.quality=q.key; saveClass(cls); render();}},[
+        el('div',{},[el('div',{class:'qn'},q.label), el('div',{class:'qd'},q.desc)]),
+        el('div',{class:'qv'}, fmt(q.frac*level.execMax)),
+      ]));
+    });
+    execCard.appendChild(qg);
+  } else {
+    const faults = [
+      {key:'petite', label:'Petite faute', pts:0.1},
+      {key:'moyenne', label:'Faute moyenne', pts:0.2},
+      {key:'grossiere', label:'Faute grossière', pts:0.3},
+      {key:'chute', label:'Chute', pts:0.5},
+    ];
+    faults.forEach(f=>{
+      const n = student.execData[f.key]||0;
+      execCard.appendChild(el('div',{class:'fault-row'},[
+        el('div',{},[el('div',{class:'fn'},f.label), el('div',{class:'fp'}, '−'+f.pts+' pt chacune')]),
+        el('div',{class:'stepper'},[
+          el('button',{onclick:()=>{ student.execData[f.key]=Math.max(0,(student.execData[f.key]||0)-1); saveClass(cls); render(); }}, '–'),
+          el('span',{class:'n'}, n),
+          el('button',{onclick:()=>{ student.execData[f.key]=(student.execData[f.key]||0)+1; saveClass(cls); render(); }}, '+'),
+        ]),
+      ]));
+    });
+  }
+  content.appendChild(execCard);
+
+  const canFinish = student.execMode==='global' ? !!student.execData.quality : true;
+  const finishActions = el('div',{class:'footer-actions'});
+  finishActions.appendChild(el('button',{class:'btn btn-gold btn-block', disabled: canFinish?null:'disabled', onclick: async ()=>{
+    student.score = computeScore(cls, student);
+    student.done = true;
+    await saveClass(cls);
+    state.screen='roster';
+    render();
+  }}, student.done? 'Mettre à jour la note' : 'Terminer l\u2019enchaînement'));
+  content.appendChild(finishActions);
+
+  if(student.done){
+    content.appendChild(el('div',{class:'card', style:'margin-top:14px; text-align:center;'},[
+      el('div',{style:'font-size:12px; color:var(--text-dim);'},'Note actuelle'),
+      el('div',{class:'num', style:'font-size:34px; color:var(--gold);'}, fmt(student.score.total)+' / '+level.finalMax),
+    ]));
+  }
+
+  app.appendChild(content);
+}
+
+function renderResults(app){
+  const cls = state.current;
+  const level = LEVELS[cls.level];
+  app.appendChild(topbar([{label:'Accueil', onClick:()=>{state.screen='home'; render();}}, {label:cls.className, onClick:()=>{state.screen='roster'; render();}}, {label:'Résultats'}]));
+  const content = el('div',{class:'content'});
+
+  content.appendChild(el('div',{class:'row', style:'margin-bottom:14px;'},[
+    el('button',{class:'btn btn-ghost btn-sm no-print', onclick:()=>window.print()}, 'Imprimer'),
+    el('button',{class:'btn btn-ghost btn-sm no-print', onclick:()=>exportCSV(cls)}, 'Exporter CSV'),
+  ]));
+
+  const table = el('table',{class:'results'});
+  table.appendChild(el('tr',{},[
+    el('th',{},'Élève'), el('th',{},'Diff.'), el('th',{},'Comp.'), el('th',{},'Exéc.'), el('th',{},'Note'),
+  ]));
+  cls.students.forEach(s=>{
+    if(!s.done){
+      table.appendChild(el('tr',{},[el('td',{},s.name), el('td',{class:'num'},'—'), el('td',{class:'num'},'—'), el('td',{class:'num'},'—'), el('td',{class:'num'},'—')]));
+    } else {
+      table.appendChild(el('tr',{},[
+        el('td',{},s.name),
+        el('td',{class:'num'}, fmt(s.score.diff.achieved)),
+        el('td',{class:'num'}, fmt(s.score.comp.achieved)),
+        el('td',{class:'num'}, fmt(s.score.exec)),
+        el('td',{class:'num', style:'color:var(--gold); font-family:Oswald;'}, fmt(s.score.total)),
+      ]));
+    }
+  });
+  content.appendChild(el('div',{class:'card'},[table]));
+  app.appendChild(content);
+}
+
+function exportCSV(cls){
+  const level = LEVELS[cls.level];
+  let rows = [['Classe',cls.className],['Niveau',level.label],[],
+    ['Élève','Section','Difficulté','Composition','Exécution','Note /'+level.finalMax]];
+  cls.students.forEach(s=>{
+    rows.push([s.name, s.gender==='F'?'Fille':'Garçon', s.done?fmt(s.score.diff.achieved):'', s.done?fmt(s.score.comp.achieved):'', s.done?fmt(s.score.exec):'', s.done?fmt(s.score.total):'']);
+  });
+  const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'notes-'+cls.className.replace(/\s+/g,'_')+'.csv';
+  a.click();
+}
+
+/* ============================= INIT ============================= */
+(function init(){
+  loadIndex();
+  render();
+})();
+</script>
+</body>
+</html>
